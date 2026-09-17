@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي نقاط العمال المهرة - FSWP Points Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root {
+            --font-ar: 'Cairo', sans-serif;
+            --font-en: 'Inter', sans-serif;
+        }
+        
+        body {
+            font-family: var(--font-ar);
+            background-color: #f8fafc;
+            color: #1e293b;
+            transition: all 0.3s ease;
+        }
+
+        html[lang="en"] body {
+            font-family: var(--font-en);
+        }
+
+        .slider-custom {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .slider-custom::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .slider-custom::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .exp-btn.active {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Checkbox custom style to ensure identical look */
+        .check-custom {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.25rem;
+            border: 1px solid #cbd5e1;
+            accent-color: #2563eb;
+            cursor: pointer;
+            margin-top: 0.125rem;
+        }
+    </style>
+</head>
+<body class="pb-12 antialiased text-slate-800">
+
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-rose-600">
+                <i class="ph-fill ph-globe-hemisphere-west text-2xl"></i>
+                <span id="nav-title" class="font-bold text-lg hidden sm:block text-slate-800">محاكي العمال المهرة</span>
+            </div>
+            <button id="lang-toggle" onclick="toggleLanguage()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition px-5 py-2 rounded-full text-sm font-bold text-slate-700">
+                English 🇨🇦
+            </button>
+        </div>
+    </nav>
+
+    <header class="max-w-3xl mx-auto px-4 pt-10 pb-6 text-center">
+        <h1 id="main-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4">حاسبة نقاط برنامج العمال المهرة الفيدرالي</h1>
+        <p id="main-desc" class="text-slate-600 leading-relaxed font-medium">
+            احسب نقاطك لمعرفة أهليتك لبرنامج العمال المهرة الفيدرالي الكندي. تحتاج إلى 67 نقطة على الأقل من أصل 100 للتأهل ودخول نظام الدخول السريع (Express Entry).
+        </p>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Form Inputs -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="ph ph-user text-xl"></i></div>
+                    <h2 id="sec-personal" class="text-xl font-bold">المعلومات الشخصية</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            <span id="lbl-age">العمر</span> (<span id="age-val">21</span>)
+                        </label>
+                        <input type="range" id="input-age" min="16" max="50" value="21" class="slider-custom mt-2" oninput="updateCalculations()">
+                    </div>
+                    <div>
+                        <label id="lbl-marital" class="block text-sm font-bold text-slate-700 mb-2">الحالة الاجتماعية</label>
+                        <select id="input-marital" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700" onchange="updateCalculations()">
+                            <option value="single" id="opt-single">أعزب</option>
+                            <option value="married" id="opt-married">متزوج</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="ph ph-graduation-cap text-xl"></i></div>
+                    <h2 id="sec-education" class="text-xl font-bold">المستوى الدراسي</h2>
+                </div>
+                <label id="lbl-degree" class="block text-sm font-bold text-slate-700 mb-2">أعلى شهادة دراسية تم الحصول عليها</label>
+                <select id="input-education" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700" onchange="updateCalculations()">
+                    <option value="phd" id="deg-phd">دكتوراه</option>
+                    <option value="masters" id="deg-masters">ماجستير، مهندس، أو طبيب</option>
+                    <option value="two_degrees" id="deg-two">شهادتين أو أكثر (إحداها 3+ سنوات)</option>
+                    <option value="bachelors" id="deg-bach" selected>بكالوريوس / ليسانس (3+ سنوات)</option>
+                    <option value="diploma_2yr" id="deg-dip2">دبلوم لمدة سنتين (DEUA)</option>
+                    <option value="diploma_1yr" id="deg-dip1">دبلوم لمدة سنة</option>
+                    <option value="high_school" id="deg-high">شهادة البكالوريا (ثانوية)</option>
+                </select>
+            </section>
+
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="ph ph-briefcase text-xl"></i></div>
+                    <h2 id="sec-work" class="text-xl font-bold">الخبرة المهنية</h2>
+                </div>
+                <label id="lbl-exp" class="block text-sm font-bold text-slate-700 mb-3">سنوات الخبرة (خلال آخر 10 سنوات)</label>
+                <div class="flex flex-wrap gap-2 sm:gap-3" id="exp-buttons-container">
+                    <!-- Buttons injected via JS -->
+                </div>
+                <div id="work-warning" class="hidden mt-4 bg-red-50 text-red-700 p-3 rounded-lg text-sm flex items-start gap-2 border border-red-200 font-medium">
+                    <i class="ph-fill ph-warning-circle text-lg shrink-0"></i>
+                    <p id="txt-work-warning">غير مؤهل (مطلوب سنة خبرة على الأقل كشرط أساسي)</p>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="ph ph-chat-circle-text text-xl"></i></div>
+                    <h2 id="sec-lang" class="text-xl font-bold">اللغة الرسمية الأولى</h2>
+                </div>
+                
+                <div class="mb-5 bg-blue-50 text-blue-800 p-3.5 rounded-lg text-sm flex items-start gap-2 border border-blue-200">
+                    <i class="ph-fill ph-info text-lg shrink-0 mt-0.5 text-blue-600"></i>
+                    <p id="txt-lang-helper" class="font-medium leading-relaxed">الامتحانات المقبولة في الجزائر: الانجليزية (IELTS General / PTE Core) | الفرنسية (TCF Canada / TEF Canada).</p>
+                </div>
+
+                <div id="lang-warning" class="hidden mb-5 bg-orange-50 text-orange-700 p-3.5 rounded-lg text-sm flex items-start gap-2 border border-orange-200">
+                    <i class="ph-fill ph-warning-circle text-lg shrink-0 mt-0.5"></i>
+                    <p id="txt-lang-warning" class="font-medium">تنبيه: يجب أن تحصل على B2 (CLB 7) على الأقل في جميع المهارات لتكون مؤهلاً لفتح الملف.</p>
+                </div>
+
+                <h3 id="lbl-lang1" class="font-bold text-slate-800 mb-4">اختر مستواك (CEFR) في كل مهارة:</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6" id="lang-dropdowns-container">
+                    <!-- Dropdowns injected via JS -->
+                </div>
+
+                <div class="border-t border-slate-100 pt-5 mt-2">
+                    <h3 id="lbl-lang2" class="font-bold text-slate-800 mb-3">اللغة الرسمية الثانية</h3>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="input-lang2" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-lang2-check" class="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition pt-1">لدي مستوى B1 (CLB 5) أو أعلى في جميع مهارات اللغة الثانية</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="ph ph-users text-xl"></i></div>
+                    <h2 id="sec-extra" class="text-xl font-bold">نقاط إضافية (العمل والتأقلم - الحد الأقصى 20 نقطة)</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- ALL checkboxes styled IDENTICALLY here -->
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-joboffer" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-joboffer" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">لدي عقد عمل معتمد وموثق في كندا (Arranged Employment)</span>
+                    </label>
+                    
+                    <label id="wrap-spouse-lang" class="hidden flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-spouselang" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-spouselang" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">الزوج(ة) لديه مستوى A2 (CLB 4) على الأقل في لغة كندية</span>
+                    </label>
+                    
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-study" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-study" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">درست في كندا لمدة سنتين على الأقل</span>
+                    </label>
+                    
+                    <label id="wrap-spouse-study" class="hidden flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-spousestudy" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-spousestudy" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">الزوج(ة) درس في كندا لمدة سنتين على الأقل</span>
+                    </label>
+                    
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-work" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-work" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">عملت في كندا لمدة سنة على الأقل</span>
+                    </label>
+                    
+                    <label id="wrap-spouse-work" class="hidden flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-spousework" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-spousework" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">الزوج(ة) عمل في كندا لمدة سنة على الأقل</span>
+                    </label>
+                    
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="chk-relative" class="check-custom" onchange="updateCalculations()">
+                        <span id="lbl-chk-relative" class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition pt-1">لدي أو لزوجي(تي) قريب يعيش في كندا (مواطن/مقيم)</span>
+                    </label>
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-4 relative">
+            <div class="sticky top-24 bg-white p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col items-center">
+                
+                <h3 id="lbl-totalscore" class="text-lg font-bold text-slate-600 mb-6 w-full text-center">مجموع النقاط</h3>
+                
+                <!-- Circular Progress Bar -->
+                <div class="relative flex items-center justify-center mb-6">
+                    <svg class="w-48 h-48 transform -rotate-90">
+                        <circle cx="96" cy="96" r="80" fill="transparent" stroke="#f1f5f9" stroke-width="12"></circle>
+                        <circle id="score-circle" cx="96" cy="96" r="80" fill="transparent" stroke="#2563eb" stroke-width="12" 
+                                stroke-dasharray="502" stroke-dashoffset="502" stroke-linecap="round" 
+                                class="transition-all duration-1000 ease-out"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="score-display" class="text-5xl font-black text-slate-800">0</span>
+                        <span class="text-sm font-bold text-slate-400 uppercase mt-1">/ 100</span>
+                    </div>
+                </div>
+
+                <div id="status-container" class="mb-8">
+                    <!-- Status injected via JS -->
+                </div>
+
+                <!-- Score Breakdown -->
+                <div class="w-full space-y-3 mb-8 text-sm bg-slate-50 p-4 rounded-xl border border-slate-100" id="breakdown-container">
+                    <!-- Breakdown injected via JS -->
+                </div>
+
+                <!-- Share Button -->
+                <button id="btn-share" onclick="shareResult()" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white py-3.5 rounded-xl font-bold transition active:scale-95 shadow-md">
+                    <i class="ph-bold ph-share-network text-lg"></i>
+                    <span id="lbl-btn-share">نسخ النتيجة للمشاركة</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let currentLang = 'ar';
+        let experienceValue = 1; // Default 1 year
+        let langScores = { reading: 9, writing: 9, listening: 9, speaking: 9 }; // Default C1 (CLB 9)
+
+        // Dictionaries
+        const dict = {
+            en: {
+                navTitle: "FSWP Simulator", langBtn: "عربي 🇩🇿",
+                mainTitle: "Express Entry FSWP Points Calculator",
+                mainDesc: "Calculate your eligibility for Canada's Federal Skilled Worker Program. You need at least 67 out of 100 points to qualify for the Express Entry pool.",
+                secPersonal: "Personal Details", lblAge: "Age",
+                lblMarital: "Marital Status", optSingle: "Single", optMarried: "Married",
+                secEducation: "Education", lblDegree: "Highest Level of Education",
+                degPhd: "PhD (Doctoral level)", degMasters: "Master's or Professional Degree", degTwo: "Two or more certificates/degrees",
+                degBach: "Bachelor's degree (3+ years)", degDip2: "2-year degree/diploma", degDip1: "1-year degree/diploma", degHigh: "High school diploma",
+                secWork: "Work Experience", lblExp: "Years of Skilled Work (Past 10 years)",
+                txtWorkWarning: "Ineligible (Min. 1 year experience required)",
+                secLang: "Language Ability (First Language)", txtLangHelper: "For Algerians: Take IELTS General or PTE Core for English. Take TCF Canada or TEF Canada for French.",
+                txtLangWarning: "Note: You need at least CLB 7 (B2) in all abilities to be eligible.",
+                lblLang1: "Select your level in each skill:", lblLang2: "Second Official Language",
+                lblLang2Check: "I have B1 (CLB 5) or higher in all 4 abilities for a second language",
+                secExtra: "Additional Points (Employment & Adaptability - Max 20 pts)",
+                lblChkJoboffer: "I have a valid arranged employment (LMIA supported or exempt)",
+                lblChkSpouselang: "Spouse has A2 (CLB 4) or higher in English or French",
+                lblChkStudy: "I studied in Canada for at least 2 years",
+                lblChkSpousestudy: "My spouse studied in Canada for at least 2 years",
+                lblChkWork: "I worked in Canada for at least 1 year",
+                lblChkSpousework: "My spouse worked in Canada for at least 1 year",
+                lblChkRelative: "I or my spouse have a relative living in Canada (Citizen/PR)",
+                lblTotalscore: "Total Score", lblBtnShare: "Share Result", copiedTxt: "Copied to Clipboard!",
+                skills: { reading: "Reading", writing: "Writing", listening: "Listening", speaking: "Speaking" },
+                clb: {
+                    10: "CLB 10+ (C1/C2 - Advanced)", 9: "CLB 9 (C1 - High)", 8: "CLB 8 (B2+ - Upper Intermediate)",
+                    7: "CLB 7 (B2 - Intermediate) - Min", 6: "CLB 6 (B1) - Ineligible", 5: "CLB 5 (B1) - Ineligible", 4: "CLB 4 (A2) - Ineligible"
+                },
+                statusEligible: "Eligible for FSWP", statusNotEligible: "Needs 67 Points",
+                bdAge: "Age", bdEdu: "Education", bdWork: "Work Exp", bdLang: "Language", bdJob: "Job Offer", bdAdapt: "Adaptability"
+            },
+            ar: {
+                navTitle: "محاكي العمال المهرة", langBtn: "English 🇨🇦",
+                mainTitle: "حاسبة نقاط برنامج العمال المهرة الفيدرالي",
+                mainDesc: "احسب نقاطك لمعرفة أهليتك لبرنامج العمال المهرة الفيدرالي الكندي. تحتاج إلى 67 نقطة على الأقل من أصل 100 للتأهل ودخول نظام الدخول السريع (Express Entry).",
+                secPersonal: "المعلومات الشخصية", lblAge: "العمر",
+                lblMarital: "الحالة الاجتماعية", optSingle: "أعزب", optMarried: "متزوج",
+                secEducation: "المستوى الدراسي", lblDegree: "أعلى شهادة دراسية تم الحصول عليها",
+                degPhd: "دكتوراه", degMasters: "ماجستير، مهندس، أو طبيب", degTwo: "شهادتين أو أكثر (إحداها 3+ سنوات)",
+                degBach: "بكالوريوس / ليسانس (3+ سنوات)", degDip2: "دبلوم لمدة سنتين (DEUA)", degDip1: "دبلوم لمدة سنة", degHigh: "شهادة البكالوريا (ثانوية)",
+                secWork: "الخبرة المهنية", lblExp: "سنوات الخبرة (خلال آخر 10 سنوات)",
+                txtWorkWarning: "غير مؤهل (مطلوب سنة خبرة على الأقل كشرط أساسي)",
+                secLang: "اللغة الرسمية الأولى", txtLangHelper: "الامتحانات المقبولة في الجزائر: الانجليزية (IELTS General / PTE Core) | الفرنسية (TCF Canada / TEF Canada).",
+                txtLangWarning: "تنبيه: يجب أن تحصل على B2 (CLB 7) على الأقل في جميع المهارات لتكون مؤهلاً لفتح الملف.",
+                lblLang1: "اختر مستواك (CEFR) في كل مهارة:", lblLang2: "اللغة الرسمية الثانية",
+                lblLang2Check: "لدي مستوى B1 (CLB 5) أو أعلى في جميع مهارات اللغة الثانية",
+                secExtra: "نقاط إضافية (العمل والتأقلم - الحد الأقصى 20 نقطة)",
+                lblChkJoboffer: "لدي عقد عمل معتمد وموثق في كندا (Arranged Employment)",
+                lblChkSpouselang: "الزوج(ة) لديه مستوى A2 (CLB 4) على الأقل في لغة كندية",
+                lblChkStudy: "درست في كندا لمدة سنتين على الأقل",
+                lblChkSpousestudy: "الزوج(ة) درس في كندا لمدة سنتين على الأقل",
+                lblChkWork: "عملت في كندا لمدة سنة على الأقل",
+                lblChkSpousework: "الزوج(ة) عمل في كندا لمدة سنة على الأقل",
+                lblChkRelative: "لدي أو لزوجي(تي) قريب يعيش في كندا (مواطن/مقيم)",
+                lblTotalscore: "مجموع النقاط", lblBtnShare: "نسخ النتيجة للمشاركة", copiedTxt: "تم النسخ بنجاح!",
+                skills: { reading: "القراءة (Reading)", writing: "الكتابة (Writing)", listening: "الاستماع (Listening)", speaking: "التحدث (Speaking)" },
+                clb: {
+                    10: "CLB 10+ (C1/C2 - متقدم جداً)", 9: "CLB 9 (C1 - متقدم)", 8: "CLB 8 (B2+ - متوسط مرتفع)",
+                    7: "CLB 7 (B2 - متوسط) - الحد الأدنى", 6: "CLB 6 (B1) - غير مقبول", 5: "CLB 5 (B1) - غير مقبول", 4: "CLB 4 (A2) - غير مقبول"
+                },
+                statusEligible: "مؤهل للبرنامج", statusNotEligible: "تحتاج إلى 67 نقطة",
+                bdAge: "العمر", bdEdu: "الدراسة", bdWork: "الخبرة", bdLang: "اللغة", bdJob: "عقد عمل", bdAdapt: "التأقلم"
+            }
+        };
+
+        const eduPoints = { phd: 25, masters: 23, two_degrees: 22, bachelors: 21, diploma_2yr: 19, diploma_1yr: 15, high_school: 5 };
+
+        function initUI() {
+            // Render Exp Buttons
+            const expContainer = document.getElementById('exp-buttons-container');
+            expContainer.innerHTML = '';
+            for(let i=0; i<=6; i++) {
+                const btn = document.createElement('button');
+                btn.className = `flex-1 min-w-[40px] py-2.5 rounded-lg font-bold transition ${i === experienceValue ? 'active' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+                btn.innerText = i === 6 ? '6+' : i;
+                btn.onclick = () => { experienceValue = i; updateCalculations(); };
+                expContainer.appendChild(btn);
+            }
+
+            // Render Lang Dropdowns
+            const langContainer = document.getElementById('lang-dropdowns-container');
+            langContainer.innerHTML = '';
+            ['reading', 'writing', 'listening', 'speaking'].forEach(skill => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label class="block text-sm font-bold text-slate-600 mb-2" id="lbl-skill-${skill}"></label>
+                    <select id="sel-${skill}" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm" onchange="updateLangScores('${skill}', this.value)">
+                        ${[10, 9, 8, 7, 6, 5, 4].map(val => `<option value="${val}" ${val === 9 ? 'selected' : ''}></option>`).join('')}
+                    </select>
+                `;
+                langContainer.appendChild(div);
+            });
+
+            applyTranslations();
+            updateCalculations();
+        }
+
+        function updateLangScores(skill, val) {
+            langScores[skill] = parseInt(val);
+            updateCalculations();
+        }
+
+        function applyTranslations() {
+            const t = dict[currentLang];
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+
+            const elements = [
+                'navTitle', 'langBtn', 'mainTitle', 'mainDesc', 'secPersonal', 'lblAge', 'lblMarital',
+                'optSingle', 'optMarried', 'secEducation', 'lblDegree', 'degPhd', 'degMasters', 'degTwo',
+                'degBach', 'degDip2', 'degDip1', 'degHigh', 'secWork', 'lblExp', 'txtWorkWarning',
+                'secLang', 'txtLangHelper', 'txtLangWarning', 'lblLang1', 'lblLang2', 'lblLang2Check',
+                'secExtra', 'lblChkJoboffer', 'lblChkSpouselang', 'lblChkStudy', 'lblChkSpousestudy',
+                'lblChkWork', 'lblChkSpousework', 'lblChkRelative', 'lblTotalscore', 'lblBtnShare'
+            ];
+
+            elements.forEach(id => {
+                const el = document.getElementById(id.replace(/([A-Z])/g, "-$1").toLowerCase());
+                if(el && t[id]) el.innerText = t[id];
+            });
+            
+            // Special cases
+            document.getElementById('nav-title').innerText = t.navTitle;
+            document.getElementById('lang-toggle').innerText = t.langBtn;
+
+            // Lang options
+            ['reading', 'writing', 'listening', 'speaking'].forEach(skill => {
+                document.getElementById(`lbl-skill-${skill}`).innerText = t.skills[skill];
+                const select = document.getElementById(`sel-${skill}`);
+                Array.from(select.options).forEach(opt => {
+                    opt.innerText = t.clb[opt.value];
+                });
+            });
+
+            // Re-render calculations with new language strings
+            updateCalculations();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            applyTranslations();
+        }
+
+        function updateCalculations() {
+            const t = dict[currentLang];
+            
+            // Read Inputs
+            const age = parseInt(document.getElementById('input-age').value);
+            document.getElementById('age-val').innerText = age;
+            const isMarried = document.getElementById('input-marital').value === 'married';
+            const edu = document.getElementById('input-education').value;
+            
+            // Toggle spouse fields visibility
+            document.getElementById('wrap-spouse-lang').style.display = isMarried ? 'flex' : 'none';
+            document.getElementById('wrap-spouse-study').style.display = isMarried ? 'flex' : 'none';
+            document.getElementById('wrap-spouse-work').style.display = isMarried ? 'flex' : 'none';
+
+            // Refresh Exp buttons UI
+            const expContainer = document.getElementById('exp-buttons-container');
+            Array.from(expContainer.children).forEach((btn, i) => {
+                if(i === experienceValue) {
+                    btn.className = 'flex-1 min-w-[40px] py-2.5 rounded-lg font-bold transition active';
+                } else {
+                    btn.className = 'flex-1 min-w-[40px] py-2.5 rounded-lg font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+
+            // Calculate Breakdown
+            let ptsAge = 0;
+            if (age >= 18 && age <= 35) ptsAge = 12;
+            else if (age >= 36 && age <= 46) ptsAge = 12 - (age - 35);
+            
+            let ptsEdu = eduPoints[edu] || 0;
+            
+            let ptsExp = 0;
+            if (experienceValue === 1) ptsExp = 9;
+            else if (experienceValue >= 2 && experienceValue <= 3) ptsExp = 11;
+            else if (experienceValue >= 4 && experienceValue <= 5) ptsExp = 13;
+            else if (experienceValue >= 6) ptsExp = 15;
+
+            let ptsLang = 0;
+            const getClbPts = (val) => { if(val>=9) return 6; if(val===8) return 5; if(val===7) return 4; return 0; };
+            ptsLang += getClbPts(langScores.reading) + getClbPts(langScores.writing) + getClbPts(langScores.listening) + getClbPts(langScores.speaking);
+            
+            if(document.getElementById('input-lang2').checked) ptsLang = Math.min(ptsLang + 4, 28);
+            
+            let ptsJob = document.getElementById('chk-joboffer').checked ? 10 : 0;
+
+            let adaptPts = 0;
+            if (isMarried && document.getElementById('chk-spouselang').checked) adaptPts += 5;
+            if (document.getElementById('chk-study').checked) adaptPts += 5;
+            if (isMarried && document.getElementById('chk-spousestudy').checked) adaptPts += 5;
+            if (document.getElementById('chk-work').checked) adaptPts += 10;
+            if (isMarried && document.getElementById('chk-spousework').checked) adaptPts += 5;
+            if (ptsJob === 10) adaptPts += 5; // Arranged employment adds 5 to adaptability
+            if (document.getElementById('chk-relative').checked) adaptPts += 5;
+            
+            let ptsAdapt = Math.min(adaptPts, 10);
+            let total = Math.min(ptsAge + ptsEdu + ptsExp + ptsLang + ptsJob + ptsAdapt, 100);
+
+            // Validation Checks
+            const hasMinExp = experienceValue > 0;
+            const hasMinLang = Object.values(langScores).every(v => v >= 7);
+            const isPassed = total >= 67 && hasMinExp && hasMinLang;
+
+            // Update UI Warnings
+            document.getElementById('work-warning').style.display = hasMinExp ? 'none' : 'flex';
+            document.getElementById('lang-warning').style.display = hasMinLang ? 'none' : 'flex';
+
+            document.getElementById('score-display').innerText = total;
+            const circle = document.getElementById('score-circle');
+            const offset = 502 - (total / 100) * 502;
+            circle.style.strokeDashoffset = offset;
+            circle.setAttribute('stroke', isPassed ? '#10b981' : '#2563eb');
+
+            const statusContainer = document.getElementById('status-container');
+            if(isPassed) {
+                statusContainer.innerHTML = `<div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-bold text-sm shadow-sm border border-emerald-200">
+                    <i class="ph-fill ph-check-circle text-lg"></i> ${t.statusEligible}
+                </div>`;
+            } else {
+                let msg = t.statusNotEligible;
+                if(!hasMinExp) msg = t.txtWorkWarning;
+                statusContainer.innerHTML = `<div class="inline-flex items-center gap-2 px-4 py-2 bg-rose-100 text-rose-800 rounded-full font-bold text-sm shadow-sm border border-rose-200">
+                    <i class="ph-fill ph-warning-circle text-lg"></i> ${msg}
+                </div>`;
+            }
+
+            // Update Breakdown UI
+            const breakdown = [
+                { label: t.bdAge, val: ptsAge, max: 12 },
+                { label: t.bdEdu, val: ptsEdu, max: 25 },
+                { label: t.bdWork, val: ptsExp, max: 15 },
+                { label: t.bdLang, val: ptsLang, max: 28 },
+                { label: t.bdJob, val: ptsJob, max: 10 },
+                { label: t.bdAdapt, val: ptsAdapt, max: 10 }
+            ];
+            
+            document.getElementById('breakdown-container').innerHTML = breakdown.map(item => `
+                <div class="flex justify-between border-b border-slate-200/60 pb-2 last:border-0 last:pb-0">
+                    <span class="text-slate-600 font-medium">${item.label}</span>
+                    <span class="font-bold text-slate-800">${item.val} <span class="text-slate-400 text-xs">/ ${item.max}</span></span>
+                </div>
+            `).join('');
+
+            // Store total globally for share function
+            window.currentScoreData = { total, breakdown, isPassed, hasMinExp };
+        }
+
+        async function shareResult() {
+            const data = window.currentScoreData;
+            const t = dict[currentLang];
+            const btn = document.getElementById('btn-share');
+            const lbl = document.getElementById('lbl-btn-share');
+            const icon = btn.querySelector('i');
+
+            const statusText = data.isPassed ? "✅ " + t.statusEligible : "❌ " + t.statusNotEligible;
+            const text = currentLang === 'ar' 
+                ? `🇨🇦 نتيجتي في برنامج العمال المهرة لكندا (FSWP):\n\nالمجموع: ${data.total}/100 نقطة\nالحالة: ${statusText}\n\n📊 التفاصيل:\n- العمر: ${data.breakdown[0].val}/12\n- الدراسة: ${data.breakdown[1].val}/25\n- الخبرة المهنية: ${data.breakdown[2].val}/15\n- اللغة: ${data.breakdown[3].val}/28\n- عرض العمل: ${data.breakdown[4].val}/10\n- التأقلم: ${data.breakdown[5].val}/10\n\n(مطلوب 67 نقطة للقبول)`
+                : `🇨🇦 My Canada FSWP Express Entry Score:\n\nTotal: ${data.total}/100\nStatus: ${statusText}\n\n📊 Breakdown:\n- Age: ${data.breakdown[0].val}/12\n- Education: ${data.breakdown[1].val}/25\n- Work Exp: ${data.breakdown[2].val}/15\n- Language: ${data.breakdown[3].val}/28\n- Job Offer: ${data.breakdown[4].val}/10\n- Adaptability: ${data.breakdown[5].val}/10\n\n(67 points needed to pass)`;
+
+            try {
+                if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+                    await navigator.share({ title: 'FSWP Score', text });
+                } else {
+                    await copyToClip(text);
+                    showCopied(btn, lbl, icon, t.copiedTxt, t.lblBtnShare);
+                }
+            } catch (e) {
+                await copyToClip(text);
+                showCopied(btn, lbl, icon, t.copiedTxt, t.lblBtnShare);
+            }
+        }
+
+        async function copyToClip(text) {
+            if(navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                let textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                textArea.remove();
+            }
+        }
+
+        function showCopied(btn, lbl, icon, textCopied, textOriginal) {
+            btn.classList.replace('bg-slate-800', 'bg-emerald-500');
+            btn.classList.replace('hover:bg-slate-900', 'hover:bg-emerald-600');
+            icon.className = 'ph-bold ph-check text-lg';
+            lbl.innerText = textCopied;
+            
+            setTimeout(() => {
+                btn.classList.replace('bg-emerald-500', 'bg-slate-800');
+                btn.classList.replace('hover:bg-emerald-600', 'hover:bg-slate-900');
+                icon.className = 'ph-bold ph-share-network text-lg';
+                lbl.innerText = textOriginal;
+            }, 3000);
+        }
+
+        // Run on load
+        window.onload = initUI;
+    </script>
+</body>
+</html>
